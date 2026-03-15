@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const app = express();
 
-// Orders routes (added)
+// Orders routes
 const ordersRouter = require('./routes/orders');
 
 // Configures the database
@@ -21,20 +21,14 @@ if (args.includes('--prod=true')) {
     database = dbConfig.urlProd;
     console.log('Using production connection string.');
 } else {
-    // allow override using MONGO_URI env var if provided
     database = process.env.MONGO_URI || dbConfig.url;
     console.log('Using local connection string.');
 }
 
-// Connects to the database
+// Connect to MongoDB
 mongoose.Promise = global.Promise;
 mongoose
-    .connect(database, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false,
-        useCreateIndex: true,
-    })
+    .connect(database)
     .then(() => {
         console.log('Successfully connected to MongoDB.');
     })
@@ -43,36 +37,52 @@ mongoose
         process.exit();
     });
 
-// Body parsing middlewares
-app.use(express.json()); // modern built-in parser
+// Middlewares
+app.use(express.json());
 app.use(bodyParser.json());
-app.use(
-    bodyParser.urlencoded({
-        extended: false,
-    }),
-);
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
-// Load routes (existing user routes)
+app.get("/", (req, res) => {
+    res.json({
+        message: "Order Management API is running 🚀",
+        endpoints: {
+            users: "/api/users",
+            orders: "/api/orders"
+        }
+    });
+});
+
+// Load existing user routes
 require('./api/routes/user.routes.js')(app);
 
-// Mount orders route
+// Orders routes
 app.use('/api/orders', ordersRouter);
 
-// Creates server (use PORT from env if provided)
+// Start server
 const PORT = process.env.PORT || 3000;
+
 const server = app.listen(PORT, function () {
-    let host = server.address().address;
-    let port = server.address().port;
-    console.log('App listening at http://%s:%s', host, port);
+    const host = server.address().address;
+    const port = server.address().port;
+
+    console.log(`Server running at http://localhost:${port}`);
 });
 
 // 404 Handler
-app.use((request, response, next) => next(createError(404, "This route don't exist.", { expose: false })));
+app.use((req, res, next) =>
+    next(createError(404, "This route doesn't exist"))
+);
 
 // Error handler
-app.use(function (error, request, response, next) {
+app.use(function (error, req, res, next) {
     console.error(error.message);
-    if (!error.statusCode) error.statusCode = 500;
-    response.status(error.statusCode).send(error.message);
+
+    if (!error.statusCode) {
+        error.statusCode = 500;
+    }
+
+    res.status(error.statusCode).json({
+        error: error.message
+    });
 });
