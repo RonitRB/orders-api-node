@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const createError = require('http-errors');
 const cors = require('cors');
+const morgan = require('morgan');
 
 const app = express();
 
@@ -25,8 +26,9 @@ if (args.includes('--prod=true')) {
     console.log('Using local connection string.');
 }
 
-// Connect to MongoDB
+//MongoDB Connection
 mongoose.Promise = global.Promise;
+
 mongoose
     .connect(database)
     .then(() => {
@@ -37,45 +39,67 @@ mongoose
         process.exit();
     });
 
-// Middlewares
+//Middlewares
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
+// Request logger (production-style logging)
+app.use(morgan('dev'));
+
+//Root Route
 app.get("/", (req, res) => {
     res.json({
         message: "Order Management API is running 🚀",
         endpoints: {
+            health: "/health",
             users: "/api/users",
             orders: "/api/orders"
         }
     });
 });
 
-// Load existing user routes
+//Health Check Route
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "OK",
+        uptime: process.uptime(),
+        message: "API is healthy",
+        timestamp: new Date()
+    });
+});
+
+/*
+--------------------------------------------------
+API Routes
+--------------------------------------------------
+*/
+
+// Existing user routes
 require('./api/routes/user.routes.js')(app);
 
 // Orders routes
 app.use('/api/orders', ordersRouter);
 
-// Start server
+/*
+--------------------------------------------------
+Start Server
+--------------------------------------------------
+*/
 const PORT = process.env.PORT || 3000;
 
-const server = app.listen(PORT, function () {
-    const host = server.address().address;
-    const port = server.address().port;
-
-    console.log(`Server running at http://localhost:${port}`);
+const server = app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
 
-// 404 Handler
-app.use((req, res, next) =>
-    next(createError(404, "This route doesn't exist"))
-);
+//404 Handler
+app.use((req, res, next) => {
+    next(createError(404, "This route doesn't exist"));
+});
 
-// Error handler
-app.use(function (error, req, res, next) {
+//Global Error Handler
+app.use((error, req, res, next) => {
     console.error(error.message);
 
     if (!error.statusCode) {
