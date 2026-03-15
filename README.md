@@ -80,14 +80,3 @@ http://localhost:3000
 Author: Ronit Bongale
 
 GitHub: https://github.com/RonitRB⁠
-
----
-
-### After updating the README
-
-Run these commands in **Git Bash**:
-
-```bash
-git add README.md
-git commit -m "Improve README with API documentation and sample request"
-git push
