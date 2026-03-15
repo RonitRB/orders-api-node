@@ -1,4 +1,4 @@
-# Order Management API
+# Node User API
 
 A backend REST API built using **Node.js, Express, and MongoDB** for managing orders.  
 This project demonstrates a modular backend architecture with controllers, models, and routes while integrating MongoDB for persistent storage.
