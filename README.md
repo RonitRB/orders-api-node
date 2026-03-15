@@ -77,9 +77,7 @@ http://localhost:3000
 
 ---
 
-###Author
-Ronit Bongale
-
+Author: Ronit Bongale
 GitHub: https://github.com/RonitRB⁠
 
 ---
